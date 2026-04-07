@@ -141,6 +141,25 @@ export const createWithdrawal = async (withdrawal: {
   return data;
 };
 
+// ==================== DEPOSIT (NEW - fixes DepositPage) ====================
+export const createDeposit = async (deposit: {
+  user_id: string;
+  amount: number;
+  currency?: string;
+  tx_hash?: string;
+  wallet_address?: string;
+  status?: 'pending' | 'approved' | 'rejected';
+}) => {
+  const { data, error } = await supabase
+    .from('deposits')
+    .insert({ ...deposit, status: deposit.status || 'pending' })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+};
+
 // ==================== SUPPORT ====================
 export const createSupportTicket = async (ticket: {
   user_id: string;
@@ -231,19 +250,13 @@ export const updateLandingPageSection = async (section: string, content: any) =>
   return data;
 };
 
-// ==================== ROI & ANALYTICS (NEW - fixes AdminSettingsPage & AnalyticsPage) ====================
-/**
- * Trigger monthly compounding ROI for all users (uses Supabase RPC)
- */
+// ==================== ROI & ANALYTICS ====================
 export const triggerCompoundingROI = async () => {
   const { data, error } = await supabase.rpc('trigger_compounding_roi');
   if (error) throw error;
   return data;
 };
 
-/**
- * Get ROI analytics for admin dashboard
- */
 export const getROIAnalytics = async () => {
   const { data, error } = await supabase
     .from('profiles')

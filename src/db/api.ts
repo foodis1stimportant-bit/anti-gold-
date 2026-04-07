@@ -1,32 +1,71 @@
 // src/db/api.ts
 import { supabase } from './supabase';
-import type { Database } from '../types/supabase'; // Adjust path if your types are elsewhere
+import type { Database } from '../types/supabase'; // create this file if it doesn't exist
 
-// Example interfaces (add more as needed)
-interface Profile {
-  id: string;
-  wallet?: string;
-  // add other fields...
-}
+// ==================== REFERRAL TREE ====================
+export const getReferralTree = async (userId: string) => {
+  const { data, error } = await supabase
+    .from('referrals')
+    .select(`
+      id,
+      referrer_id,
+      referred_id,
+      level,
+      created_at,
+      referred:profiles!referred_id (
+        id,
+        username,
+        avatar_url,
+        total_invested
+      )
+    `)
+    .eq('referrer_id', userId)
+    .order('level', { ascending: true });
 
-// ==================== USER / PROFILE ====================
+  if (error) throw error;
+  return data;
+};
 
-export const getProfile = async (userId: string) => {
+// ==================== LEADERBOARD ====================
+export const getLeaderboard = async (limit: number = 10) => {
   const { data, error } = await supabase
     .from('profiles')
+    .select('id, username, avatar_url, total_invested, referral_count')
+    .order('total_invested', { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  return data;
+};
+
+// ==================== ADMIN AUDIT LOGS ====================
+export const getAdminAuditLogs = async (limit: number = 50) => {
+  const { data, error } = await supabase
+    .from('audit_logs')
     .select('*')
-    .eq('id', userId)
-    .single();
+    .order('created_at', { ascending: false })
+    .limit(limit);
 
   if (error) throw error;
   return data;
 };
 
-export const updateProfile = async (profile: Partial<Profile> & { id: string }) => {
+// ==================== PLATFORM SETTINGS ====================
+export const getPlatformSetting = async (key: string) => {
   const { data, error } = await supabase
-    .from('profiles')
-    .update(profile)
-    .eq('id', profile.id)
+    .from('platform_settings')
+    .select('value')
+    .eq('key', key)
+    .single();
+
+  if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows
+  return data?.value ?? null;
+};
+
+export const updatePlatformSetting = async (key: string, value: any) => {
+  const { data, error } = await supabase
+    .from('platform_settings')
+    .upsert({ key, value, updated_at: new Date().toISOString() })
     .select()
     .single();
 
@@ -34,24 +73,16 @@ export const updateProfile = async (profile: Partial<Profile> & { id: string }) 
   return data;
 };
 
-// ==================== WALLET / INVESTMENT ====================
-
-export const getWalletBalance = async (wallet: string) => {
+// ==================== DEPOSITS ====================
+export const rejectDeposit = async (depositId: string, reason?: string) => {
   const { data, error } = await supabase
-    .from('wallets')
-    .select('balance')
-    .eq('wallet_address', wallet)
-    .single();
-
-  if (error) throw error;
-  return data?.balance || 0;
-};
-
-export const updateWalletBalance = async (wallet: string, amount: number) => {
-  const { data, error } = await supabase
-    .from('wallets')
-    .update({ balance: amount })
-    .eq('wallet_address', wallet)
+    .from('deposits')
+    .update({ 
+      status: 'rejected',
+      rejected_reason: reason,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', depositId)
     .select()
     .single();
 
@@ -59,13 +90,22 @@ export const updateWalletBalance = async (wallet: string, amount: number) => {
   return data;
 };
 
-// Add other API functions you have in the file...
-
-// Example of a common function that had the 'any' error:
-export const createInvestment = async (userId: string, amount: number, wallet: string) => {
+// ==================== LANDING PAGE SETTINGS ====================
+export const getLandingPageSettings = async () => {
   const { data, error } = await supabase
-    .from('investments')
-    .insert({ user_id: userId, amount, wallet_address: wallet })
+    .from('landing_page_settings')
+    .select('*')
+    .single();
+
+  if (error) throw error;
+  return data;
+};
+
+export const updateLandingPageSection = async (section: string, content: any) => {
+  const { data, error } = await supabase
+    .from('landing_page_settings')
+    .update({ [section]: content, updated_at: new Date().toISOString() })
+    .eq('id', 1) // assuming single row
     .select()
     .single();
 
@@ -73,4 +113,5 @@ export const createInvestment = async (userId: string, amount: number, wallet: s
   return data;
 };
 
-// ... rest of your api.ts functions (keep them as they are, just ensure parameters have types)
+// Add any other functions you already have in api.ts below...
+// (Keep your existing functions and just make sure parameters have proper types)

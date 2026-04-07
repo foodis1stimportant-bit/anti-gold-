@@ -74,12 +74,8 @@ Sentry.init({
   replaysOnErrorSampleRate: 1.0,
 });
 
-console.log('[v0] main.tsx: Starting app initialization');
-
 const rootElement = document.getElementById("root");
 if (!rootElement) throw new Error("Failed to find the root element");
-
-console.log('[v0] main.tsx: Root element found, rendering app');
 
 // Always render the app - contexts handle missing Supabase gracefully
 ReactDOM.createRoot(rootElement).render(

@@ -84,7 +84,7 @@ export const getReferralCommissions = async (userId: string) => {
 
 export const getDownlineSummary = async (userId: string) => {
   const { data, error } = await supabase
-    .rpc('get_downline_summary', { user_id: userId }); // Use RPC if you have it, or replace with custom query
+    .rpc('get_downline_summary', { user_id: userId });
 
   if (error) throw error;
   return data;
@@ -226,6 +226,37 @@ export const updateLandingPageSection = async (section: string, content: any) =>
     .eq('id', 1)
     .select()
     .single();
+
+  if (error) throw error;
+  return data;
+};
+
+// ==================== ROI & ANALYTICS (NEW - fixes AdminSettingsPage & AnalyticsPage) ====================
+/**
+ * Trigger monthly compounding ROI for all users (uses Supabase RPC)
+ */
+export const triggerCompoundingROI = async () => {
+  const { data, error } = await supabase.rpc('trigger_compounding_roi');
+  if (error) throw error;
+  return data;
+};
+
+/**
+ * Get ROI analytics for admin dashboard
+ */
+export const getROIAnalytics = async () => {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select(`
+      id,
+      username,
+      avatar_url,
+      total_invested,
+      performance_usdt,
+      last_roi_credit_at,
+      referral_count
+    `)
+    .order('total_invested', { ascending: false });
 
   if (error) throw error;
   return data;

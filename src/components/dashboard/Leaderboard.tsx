@@ -8,8 +8,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 interface Leader {
   id: string;
-  name: string;
-  levels_unlocked: number;
+  username: string;
+  avatar_url: string | null;
+  total_invested: number;
+  referral_count: number;
 }
 
 export function Leaderboard() {
@@ -38,7 +40,7 @@ export function Leaderboard() {
             <Trophy className="h-5 w-5 text-primary" />
             Network Leaders
           </CardTitle>
-          <CardDescription>Top earners by levels unlocked</CardDescription>
+          <CardDescription>Top earners by total invested</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {[1, 2, 3].map(i => (
@@ -78,7 +80,7 @@ export function Leaderboard() {
               <Trophy className="h-5 w-5 text-primary" />
               Network Leaders
             </CardTitle>
-            <CardDescription>Top performers in the 15-tier system</CardDescription>
+            <CardDescription>Top performers by total invested</CardDescription>
           </div>
           <Badge variant="outline" className="bg-primary/10 border-primary/20 text-primary font-bold">
             Live Rankings
@@ -93,7 +95,7 @@ export function Leaderboard() {
                 <div className="relative">
                   <Avatar className="h-10 w-10 border border-primary/20">
                     <AvatarFallback className="bg-primary/10 text-primary font-bold">
-                      {leader.name[0]}
+                      {leader.username?.[0] || '?'}
                     </AvatarFallback>
                   </Avatar>
                   <div className="absolute -top-1 -right-1 bg-background rounded-full p-0.5 border border-primary/20">
@@ -101,23 +103,17 @@ export function Leaderboard() {
                   </div>
                 </div>
                 <div>
-                  <p className="font-bold text-sm tracking-tight">{maskName(leader.name)}</p>
+                  <p className="font-bold text-sm tracking-tight">{maskName(leader.username)}</p>
                   <p className="text-[10px] uppercase font-black tracking-widest text-muted-foreground flex items-center gap-1">
                     <Users className="h-3 w-3" />
-                    Elite Partner
+                    {leader.referral_count} referrals
                   </p>
                 </div>
               </div>
               <div className="text-right">
                 <div className="flex items-center gap-1 justify-end">
-                  <span className="text-lg font-black text-primary">{leader.levels_unlocked}</span>
-                  <span className="text-[10px] font-bold opacity-60">Levels</span>
-                </div>
-                <div className="w-16 h-1 bg-white/10 rounded-full mt-1 overflow-hidden">
-                  <div 
-                    className="h-full bg-primary" 
-                    style={{ width: `${(leader.levels_unlocked / 15) * 100}%` }}
-                  />
+                  <span className="text-lg font-black text-primary">${leader.total_invested.toLocaleString()}</span>
+                  <span className="text-[10px] font-bold opacity-60">USDT</span>
                 </div>
               </div>
             </div>

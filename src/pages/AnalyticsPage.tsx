@@ -228,3 +228,33 @@ export default function AnalyticsPage() {
     </div>
   );
 }
+// ... (all imports stay the same)
+
+export default function AnalyticsPage() {
+  const { user, profile } = useAuth();
+  const navigate = useNavigate();
+  const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [period, setPeriod] = useState('30');
+
+  useEffect(() => {
+    if (user) {
+      loadAnalytics();
+    }
+  }, [user]);
+
+  const loadAnalytics = async () => {
+    try {
+      setLoading(true);
+      // FIXED: removed the 2 arguments (function now takes 0)
+      const analyticsData = await getROIAnalytics();
+      setData(analyticsData);
+    } catch (error) {
+      console.error('Failed to load analytics:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ... (rest of your component stays exactly the same)
+}

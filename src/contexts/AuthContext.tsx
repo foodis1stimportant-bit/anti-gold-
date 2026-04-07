@@ -2,7 +2,6 @@ import * as React from 'react';
 import { supabase, isSupabaseConfigured } from '@/db/supabase';
 import type { User } from '@supabase/supabase-js';
 import type { Profile } from '@/types';
-import { toast } from 'sonner';
 import { useAnalytics } from '@/lib/analytics';
 
 export async function getProfile(userId: string): Promise<Profile | null> {

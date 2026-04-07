@@ -20,11 +20,8 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = React.useState<Error | null>(null);
 
   const loadSettings = async () => {
-    console.log('[v0] SettingsContext: Starting to load settings, isSupabaseConfigured:', isSupabaseConfigured);
-    
     // Skip loading if Supabase is not configured
     if (!isSupabaseConfigured) {
-      console.warn('[v0] Skipping settings load - Supabase not configured');
       setLoading(false);
       return;
     }

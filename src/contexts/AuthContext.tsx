@@ -56,11 +56,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   React.useEffect(() => {
-    console.log('[v0] AuthContext: Initializing, isSupabaseConfigured:', isSupabaseConfigured);
-    
     // Skip auth initialization if Supabase is not configured
     if (!isSupabaseConfigured) {
-      console.warn('[v0] Skipping auth initialization - Supabase not configured');
       setLoading(false);
       return;
     }

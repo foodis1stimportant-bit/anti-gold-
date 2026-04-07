@@ -15,7 +15,7 @@ import { Gold3DIcon } from '@/components/ui/Gold3DIcon';
 import type { Transaction, WalletBalances } from '@/types';
 import { cn } from '@/lib/utils';
 
-// Helper to convert DB array → WalletBalances object (fixes TS2345)
+// Helper to convert DB array → WalletBalances object (fixes type mismatch)
 const convertToWalletBalances = (rawData: { balance: number; currency: string }[]): WalletBalances => {
   const balances: WalletBalances = {
     deposit: 0,
@@ -27,12 +27,12 @@ const convertToWalletBalances = (rawData: { balance: number; currency: string }[
 
   rawData.forEach((item) => {
     const key = item.currency.toLowerCase() as keyof Omit<WalletBalances, 'total'>;
-    if (key in balances) {
+    if (key in balances && typeof item.balance === 'number') {
       balances[key] = item.balance;
     }
   });
 
-  balances.total = balances.deposit + balances.roi + balances.bonus + balances.withdrawal;
+  balances.total = (balances.deposit ?? 0) + (balances.roi ?? 0) + (balances.bonus ?? 0) + (balances.withdrawal ?? 0);
   return balances;
 };
 
@@ -184,7 +184,7 @@ export default function DashboardPage() {
 
       {/* Main Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {/* Total Assets Card - Primary Focus */}
+        {/* Total Assets Card */}
         <Card className="col-span-1 md:col-span-2 v56-glass premium-border relative overflow-hidden group gold-shimmer min-h-[160px] flex flex-col justify-center">
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
             <Logo size={140} />
@@ -204,16 +204,139 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Rest of your cards, transactions list, ROITimer, etc. go here */}
-        {/* Paste the remaining JSX from your original file here (it is unchanged) */}
-        {/* Example placeholder for other cards - replace with your actual code */}
-        {/* ... your other Card components ... */}
+        {/* Deposit Balance */}
+        <Card className="v56-glass premium-border">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <ArrowDownToLine className="h-4 w-4" />
+              Deposit
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-black">${(balances?.deposit ?? 0).toFixed(2)}</p>
+          </CardContent>
+        </Card>
 
+        {/* ROI Balance */}
+        <Card className="v56-glass premium-border">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Award className="h-4 w-4" />
+              ROI
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-black">${(balances?.roi ?? 0).toFixed(2)}</p>
+          </CardContent>
+        </Card>
+
+        {/* Bonus Balance */}
+        <Card className="v56-glass premium-border">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Bonus
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-black">${(balances?.bonus ?? 0).toFixed(2)}</p>
+          </CardContent>
+        </Card>
+
+        {/* Quick Actions */}
+        <Card className="col-span-1 md:col-span-2 lg:col-span-4 v56-glass premium-border">
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              Quick Actions
+              <Link to="/deposit" className="text-primary hover:underline text-sm font-medium flex items-center gap-1">
+                Deposit <ArrowRight className="h-3 w-3" />
+              </Link>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Button asChild size="lg" className="h-14 text-base font-semibold">
+              <Link to="/deposit">
+                <ArrowDownToLine className="mr-2 h-5 w-5" />
+                Deposit
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="lg" className="h-14 text-base font-semibold">
+              <Link to="/withdraw">
+                <ArrowUpFromLine className="mr-2 h-5 w-5" />
+                Withdraw
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="lg" className={cn("h-14 text-base font-semibold")}>
+              <Link to="/referrals">
+                <Users className="mr-2 h-5 w-5" />
+                Invite
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="lg" className="h-14 text-base font-semibold">
+              <Link to="/profile">
+                <Activity className="mr-2 h-5 w-5" />
+                Profile
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Recent Transactions */}
+        <Card className="col-span-1 md:col-span-2 lg:col-span-4 v56-glass premium-border">
+          <CardHeader className="flex-row items-center justify-between">
+            <CardTitle>Recent Transactions</CardTitle>
+            <Link to="/transactions" className="text-primary text-sm flex items-center gap-1 hover:underline">
+              View all <ArrowRight className="h-3 w-3" />
+            </Link>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {transactions.length > 0 ? (
+                transactions.map((tx) => (
+                  <div key={tx.id} className="flex justify-between items-center">
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "w-8 h-8 rounded-xl flex items-center justify-center",
+                        tx.type === 'deposit' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'
+                      )}>
+                        {tx.type === 'deposit' ? <ArrowDownToLine className="h-4 w-4" /> : <ArrowUpFromLine className="h-4 w-4" />}
+                      </div>
+                      <div>
+                        <p className="font-medium capitalize">{tx.type}</p>
+                        <p className="text-xs text-muted-foreground">{new Date(tx.created_at).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className={cn(
+                        "font-black",
+                        tx.type === 'deposit' ? 'text-green-500' : 'text-red-500'
+                      )}>
+                        {tx.type === 'deposit' ? '+' : '-'}${tx.amount}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">{tx.currency}</p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-center text-muted-foreground py-8">No transactions yet</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* ROI Timer */}
+        <Card className="col-span-1 md:col-span-2 lg:col-span-4 v56-glass premium-border">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Next ROI Credit
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ROITimer />
+          </CardContent>
+        </Card>
       </div>
-
-      {/* Add your remaining sections here (transactions, ROI timer, etc.) */}
-      {/* Everything below this comment should be exactly the same as your original file */}
-
     </div>
   );
 }

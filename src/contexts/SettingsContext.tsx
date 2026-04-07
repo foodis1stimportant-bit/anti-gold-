@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { supabase } from '@/db/supabase';
+import { supabase, isSupabaseConfigured } from '@/db/supabase';
 
 export interface PlatformSettings {
   [key: string]: string;
@@ -8,6 +8,7 @@ export interface PlatformSettings {
 interface SettingsContextType {
   settings: PlatformSettings;
   loading: boolean;
+  error: Error | null;
   refreshSettings: () => Promise<void>;
 }
 
@@ -16,12 +17,29 @@ const SettingsContext = React.createContext<SettingsContextType | undefined>(und
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] = React.useState<PlatformSettings>({});
   const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<Error | null>(null);
 
   const loadSettings = async () => {
+    console.log('[v0] SettingsContext: Starting to load settings, isSupabaseConfigured:', isSupabaseConfigured);
+    
+    // Skip loading if Supabase is not configured
+    if (!isSupabaseConfigured) {
+      console.warn('[v0] Skipping settings load - Supabase not configured');
+      setLoading(false);
+      return;
+    }
+
     try {
-      const { data } = await supabase.from('settings').select('key, value');
-      const settingsObj: any = {};
-      data?.forEach((s: any) => {
+      setError(null);
+      const { data, error: fetchError } = await supabase.from('settings').select('key, value');
+      
+      if (fetchError) {
+        console.warn('[v0] Settings fetch warning:', fetchError.message);
+        // Don't throw - just use empty settings
+      }
+      
+      const settingsObj: Record<string, string> = {};
+      data?.forEach((s: { key: string; value: string }) => {
         settingsObj[s.key] = s.value;
       });
       setSettings(settingsObj);
@@ -42,7 +60,9 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         link.href = settingsObj.favicon_url;
       }
     } catch (err) {
-      console.error('Settings load error:', err);
+      console.error('[v0] Settings load error:', err);
+      setError(err instanceof Error ? err : new Error('Failed to load settings'));
+      // Don't re-throw - allow app to continue with default settings
     } finally {
       setLoading(false);
     }
@@ -53,7 +73,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <SettingsContext.Provider value={{ settings, loading, refreshSettings: loadSettings }}>
+    <SettingsContext.Provider value={{ settings, loading, error, refreshSettings: loadSettings }}>
       {children}
     </SettingsContext.Provider>
   );

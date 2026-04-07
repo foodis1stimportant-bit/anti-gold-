@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { supabase } from '@/db/supabase';
+import { supabase, isSupabaseConfigured } from '@/db/supabase';
 import type { User } from '@supabase/supabase-js';
 import type { Profile } from '@/types';
 import { toast } from 'sonner';
@@ -57,6 +57,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   React.useEffect(() => {
+    console.log('[v0] AuthContext: Initializing, isSupabaseConfigured:', isSupabaseConfigured);
+    
+    // Skip auth initialization if Supabase is not configured
+    if (!isSupabaseConfigured) {
+      console.warn('[v0] Skipping auth initialization - Supabase not configured');
+      setLoading(false);
+      return;
+    }
+
     supabase
       .auth
       .getSession()
@@ -68,8 +77,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       })
       .catch(error => {
-        // @ts-ignore
-        toast.error(`Failed to get user session: ${error.message}`);
+        console.error('[v0] Auth session error:', error);
+        // Don't show toast for initial load errors - just log them
       })
       .finally(() => {
         setLoading(false);

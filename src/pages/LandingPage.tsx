@@ -25,19 +25,28 @@ const iconMap: Record<string, any> = {
 export default function LandingPage() {
   const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState<any[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const { trackFunnelStep } = useAnalytics();
 
   useEffect(() => {
     fetchSettings();
-    trackFunnelStep('landing_page_view', 1);
+    try {
+      trackFunnelStep('landing_page_view', 1);
+    } catch (e) {
+      // Analytics tracking is optional - don't block render
+      console.warn('[v0] Analytics tracking failed:', e);
+    }
   }, []);
 
   const fetchSettings = async () => {
     try {
       const data = await getLandingPageSettings();
       setSettings(data);
-    } catch (error) {
-      console.error('Failed to fetch landing page settings:', error);
+      setError(null);
+    } catch (err) {
+      console.error('[v0] Failed to fetch landing page settings:', err);
+      setError('Failed to load settings');
+      // Continue with default settings instead of blocking render
     } finally {
       setLoading(false);
     }
@@ -105,6 +114,9 @@ export default function LandingPage() {
     referral_bonus: "Up to 15%",
     duration: "Lifetime"
   });
+
+  // Debug log to track render state
+  console.log('[v0] LandingPage render state:', { loading, settingsCount: settings.length, error });
 
   if (loading) {
     return (

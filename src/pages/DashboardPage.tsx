@@ -15,7 +15,7 @@ import { Gold3DIcon } from '@/components/ui/Gold3DIcon';
 import type { Transaction, WalletBalances } from '@/types';
 import { cn } from '@/lib/utils';
 
-// Helper to convert DB array → WalletBalances object (fixes type mismatch)
+// Helper to convert DB array → WalletBalances object (matches your exact WalletBalances interface)
 const convertToWalletBalances = (rawData: { balance: number; currency: string }[]): WalletBalances => {
   const balances: WalletBalances = {
     deposit: 0,
@@ -48,7 +48,7 @@ export default function DashboardPage() {
     if (user) {
       loadData();
 
-      // Setup realtime subscriptions
+      // Realtime subscriptions
       const walletsChannel = supabase
         .channel(`public:wallets:user_id=eq.${user.id}`)
         .on('postgres_changes', { 
@@ -297,23 +297,30 @@ export default function DashboardPage() {
                     <div className="flex items-center gap-3">
                       <div className={cn(
                         "w-8 h-8 rounded-xl flex items-center justify-center",
-                        tx.type === 'deposit' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'
+                        tx.transaction_type === 'deposit' || tx.transaction_type === 'roi_credit' || tx.transaction_type === 'referral_commission'
+                          ? 'bg-green-500/10 text-green-500'
+                          : 'bg-red-500/10 text-red-500'
                       )}>
-                        {tx.type === 'deposit' ? <ArrowDownToLine className="h-4 w-4" /> : <ArrowUpFromLine className="h-4 w-4" />}
+                        {(tx.transaction_type === 'deposit' || tx.transaction_type === 'roi_credit' || tx.transaction_type === 'referral_commission') 
+                          ? <ArrowDownToLine className="h-4 w-4" /> 
+                          : <ArrowUpFromLine className="h-4 w-4" />}
                       </div>
                       <div>
-                        <p className="font-medium capitalize">{tx.type}</p>
+                        <p className="font-medium capitalize">{tx.transaction_type.replace('_', ' ')}</p>
                         <p className="text-xs text-muted-foreground">{new Date(tx.created_at).toLocaleDateString()}</p>
                       </div>
                     </div>
                     <div className="text-right">
                       <p className={cn(
                         "font-black",
-                        tx.type === 'deposit' ? 'text-green-500' : 'text-red-500'
+                        (tx.transaction_type === 'deposit' || tx.transaction_type === 'roi_credit' || tx.transaction_type === 'referral_commission')
+                          ? 'text-green-500'
+                          : 'text-red-500'
                       )}>
-                        {tx.type === 'deposit' ? '+' : '-'}${tx.amount}
+                        {(tx.transaction_type === 'deposit' || tx.transaction_type === 'roi_credit' || tx.transaction_type === 'referral_commission') ? '+' : '-'}
+                        ${tx.net_amount.toFixed(2)}
                       </p>
-                      <p className="text-[10px] text-muted-foreground">{tx.currency}</p>
+                      <p className="text-[10px] text-muted-foreground">USDT</p>
                     </div>
                   </div>
                 ))
@@ -324,7 +331,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* ROI Timer */}
+        {/* ROI Timer - Fixed with required prop */}
         <Card className="col-span-1 md:col-span-2 lg:col-span-4 v56-glass premium-border">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -333,7 +340,7 @@ export default function DashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ROITimer />
+            <ROITimer lastCreditAt={null} />
           </CardContent>
         </Card>
       </div>

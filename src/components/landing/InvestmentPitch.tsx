@@ -9,7 +9,7 @@ import { Gold3DIcon } from '@/components/ui/Gold3DIcon';
 import { ChevronLeft, ChevronRight, Diamond, Globe, MapPin, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { supabase } from '@/db/supabase';
+import { supabase, isSupabaseConfigured } from '@/db/supabase';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
 
@@ -85,14 +85,24 @@ export function InvestmentPitch() {
   }, []);
 
   const fetchSettings = async () => {
+    // Skip if Supabase not configured
+    if (!isSupabaseConfigured) {
+      console.warn('[v0] InvestmentPitch: Skipping settings fetch - Supabase not configured');
+      return;
+    }
+    
     try {
-      const { data } = await supabase.from('settings').select('key, value');
+      const { data, error } = await supabase.from('settings').select('key, value');
+      if (error) {
+        console.warn('[v0] InvestmentPitch settings fetch warning:', error.message);
+        return;
+      }
       if (data) {
         const roiSetting = (data as any[]).find(s => s.key === 'monthly_roi_percentage');
         if (roiSetting) setMonthlyRoi(parseFloat(roiSetting.value));
       }
     } catch (e) {
-      console.error(e);
+      console.error('[v0] InvestmentPitch settings error:', e);
     }
   };
 

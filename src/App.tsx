@@ -14,6 +14,9 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 
 function AppContent() {
   const location = useLocation();
+  
+  // Debug log to track app rendering
+  console.log('[v0] AppContent rendering, path:', location.pathname);
   // Capture referral code from URL and store in sessionStorage
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -66,8 +69,11 @@ function AppContent() {
 }
 
 const App: React.FC = () => {
+  console.log('[v0] App component rendering');
+  
   // Initialize security features on app load
   useEffect(() => {
+    console.log('[v0] Initializing security features');
     initializeSecurity();
   }, []);
 

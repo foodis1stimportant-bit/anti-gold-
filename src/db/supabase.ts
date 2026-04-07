@@ -1,5 +1,5 @@
 
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -13,8 +13,9 @@ if (!isSupabaseConfigured) {
   );
 }
 
-// Create a mock client if not configured to prevent crashes
-export const supabase: SupabaseClient = isSupabaseConfigured
-  ? createClient(supabaseUrl, supabaseAnonKey)
-  : (createClient("https://placeholder.supabase.co", "placeholder-key") as SupabaseClient);
+// Create client only if configured - this is the actual client used throughout the app
+export const supabase: SupabaseClient = createClient(
+  supabaseUrl || "https://placeholder.supabase.co",
+  supabaseAnonKey || "placeholder-key"
+);
             

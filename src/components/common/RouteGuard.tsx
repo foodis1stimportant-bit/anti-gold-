@@ -57,6 +57,9 @@ export function RouteGuard({ children }: RouteGuardProps) {
     }
   }, [user, profile, loading, location.pathname, navigate]);
 
+  // Debug log to track auth state
+  console.log('[v0] RouteGuard state:', { loading, hasUser: !!user, hasProfile: !!profile, path: location.pathname });
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background gap-4">

@@ -1,31 +1,20 @@
 // src/db/supabase.ts
+import { createClient } from '@supabase/supabase-js';
 
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Env variables
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// ✅ Fix TS2305 (missing export)
-export const isSupabaseConfigured = (): boolean => {
-  return !!supabaseUrl && !!supabaseAnonKey;
+// Helper to check if Supabase is properly configured
+export const isSupabaseConfigured = () => {
+  return !!(
+    supabaseUrl &&
+    supabaseAnonKey &&
+    supabaseUrl.length > 10 &&
+    supabaseAnonKey.length > 20
+  );
 };
 
-// Singleton instance
-let supabase: SupabaseClient | null = null;
-
-// ✅ Fix TS18047 (possibly null)
-export const getSupabase = (): SupabaseClient => {
-  if (!isSupabaseConfigured()) {
-    throw new Error("Supabase environment variables are not set.");
-  }
-
-  if (!supabase) {
-    supabase = createClient(
-      supabaseUrl as string,
-      supabaseAnonKey as string
-    );
-  }
-
-  return supabase;
-};
+// Optional: export types if needed
+export type { SupabaseClient } from '@supabase/supabase-js';

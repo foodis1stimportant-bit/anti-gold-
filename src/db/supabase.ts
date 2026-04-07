@@ -1,19 +1,17 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+// src/db/supabase.ts
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+import { createClient } from "@supabase/supabase-js";
 
-// Check if Supabase credentials are configured
-export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
+// Environment variables
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-if (!isSupabaseConfigured) {
-  console.warn(
-    "[v0] Supabase is not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables."
-  );
-}
+// ✅ Helper to check config (THIS fixes your error)
+export const isSupabaseConfigured = (): boolean => {
+  return !!supabaseUrl && !!supabaseAnonKey;
+};
 
-// Create client only if configured - this is the actual client used throughout the app
-export const supabase: SupabaseClient = createClient(
-  supabaseUrl || "https://placeholder.supabase.co",
-  supabaseAnonKey || "placeholder-key"
-);
+// ✅ Create client safely
+export const supabase = isSupabaseConfigured()
+  ? createClient(supabaseUrl as string, supabaseAnonKey as string)
+  : null;
